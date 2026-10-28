@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
+$env:LOTTO_LOCAL_MODE = '1'
 $projectPython = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $projectPython)) {
     Write-Host 'Virtual environment missing. Follow README.md to install.'

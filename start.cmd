@@ -1,5 +1,6 @@
 @echo off
 cd /d "%~dp0"
+set "LOTTO_LOCAL_MODE=1"
 if not exist ".venv\Scripts\python.exe" (
   echo Virtual environment missing. See README.md.
   pause

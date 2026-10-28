@@ -5,6 +5,7 @@ from contextlib import closing
 import io
 import json
 import os
+import tempfile
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -48,8 +49,19 @@ def chart(fig):
     st.plotly_chart(fig, width="stretch")
 
 
+def database_path():
+    explicit = os.environ.get("LOTTO_DB_PATH")
+    if explicit:
+        return explicit
+    if os.environ.get("LOTTO_LOCAL_MODE") == "1":
+        return str(ROOT / "data/lotto.sqlite3")
+    if "workspace" not in st.session_state:
+        st.session_state.workspace = tempfile.TemporaryDirectory(prefix="lotto-session-")
+    return str(Path(st.session_state.workspace.name) / "lotto.sqlite3")
+
+
 def main():
-    with closing(connect(os.environ.get("LOTTO_DB_PATH", str(ROOT / "data/lotto.sqlite3")))) as db:
+    with closing(connect(database_path())) as db:
         snapshot = ROOT / "data/official_history.csv"
         if not os.environ.get("LOTTO_DB_PATH") and not load_draws(db) and snapshot.exists():
             try:
@@ -63,6 +75,8 @@ def main():
         with st.sidebar:
             st.title("🍀 로또 랩")
             st.caption("LOTTO LAB / 6·45")
+            if not os.environ.get("LOTTO_DB_PATH") and os.environ.get("LOTTO_LOCAL_MODE") != "1":
+                st.caption("웹 체험 · 기록은 현재 접속에만 보관됩니다. 새로고침·연결 종료 전 CSV로 저장하세요.")
             page = st.radio("메뉴", ["대시보드", "통계 분석", "번호 추천", "추천 기록 · 결과", "과거 검증", "데이터 관리"], label_visibility="collapsed", key="page")
             st.divider()
             st.caption("데이터 반영 현황")

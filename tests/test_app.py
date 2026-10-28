@@ -51,3 +51,20 @@ def test_invalid_recommendation_shows_message(tmp_path, monkeypatch):
     next(b for b in app.button if b.label == "번호 생성").click().run()
     assert not app.exception
     assert app.error and "중복" in app.error[0].value
+
+
+def test_public_sessions_keep_records_separate(monkeypatch):
+    monkeypatch.delenv("LOTTO_DB_PATH", raising=False)
+    monkeypatch.delenv("LOTTO_LOCAL_MODE", raising=False)
+    first = AppTest.from_file(APP, default_timeout=30).run()
+    first.sidebar.radio[0].set_value("번호 추천").run()
+    next(b for b in first.button if b.label == "번호 생성").click().run()
+    next(b for b in first.button if b.label == "추천 기록에 저장").click().run()
+    first.sidebar.radio[0].set_value("추천 기록 · 결과").run()
+    assert not first.exception
+    assert len(first.dataframe[0].value) == 5
+    second = AppTest.from_file(APP, default_timeout=30).run()
+    second.sidebar.radio[0].set_value("추천 기록 · 결과").run()
+    assert not second.exception
+    assert len(second.dataframe) == 0
+    assert first.session_state["workspace"].name != second.session_state["workspace"].name

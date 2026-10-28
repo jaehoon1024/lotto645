@@ -26,7 +26,10 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-서버는 기본적으로 내 PC의 `127.0.0.1`에서만 접속할 수 있습니다. 로컬 SQLite 파일을 보존하면 추천 기록도 유지됩니다.
+`start.cmd`와 `start.ps1`는 로컬 모드로 실행하고 `127.0.0.1`에서만 접속할 수 있습니다.
+로컬 SQLite 파일을 보존하면 추천 기록도 유지됩니다.
+직접 실행 시에도 영구 로컬 저장을 사용하려면 PowerShell에서 `$env:LOTTO_LOCAL_MODE = '1'`을 먼저 설정하세요.
+기본 실행은 웹 체험 모드로, 접속마다 분리된 임시 DB를 사용합니다.
 
 ## 사용
 
@@ -97,8 +100,18 @@ GitHub 저장소에는 소스와 공식 당첨 이력 동봉본만 포함합니�
 가상환경, 개인 추천 기록이 들어 있는 SQLite DB, 환경 변수 파일, Streamlit 비밀 설정은 제외합니다.
 GitHub Pages는 Python 서버를 실행하지 않으므로 이 프로그램을 직접 호스팅할 수 없습니다.
 웹 실행은 Python을 지원하는 별도 호스팅에 저장소를 연결하고 `app.py`를 실행해야 합니다.
-현재 버전은 개인용으로, 서버를 공유하면 같은 SQLite 데이터와 추천 기록을 함께 사용합니다.
-여러 사용자가 이용하는 서비스로 운영하려면 로그인과 사용자별 데이터 분리를 먼저 추가해야 합니다.
+기본 웹 체험 모드에서는 방문자별 임시 DB에 추천 기록과 추가 당첨 데이터를 분리합니다.
+새로고침·세션 종료·서버 재시작으로 기록을 잃을 수 있으므로 CSV로 내려받으세요.
+로그인 기반의 영구 저장 기능은 포함하지 않습니다.
+
+Streamlit Community Cloud 배포 설정:
+
+- Repository: `jaehoon1024/lotto645`
+- Branch: `main`
+- Main file path: `app.py`
+- Python: `3.12`
+- 별도 비밀 키나 유료 API는 필요하지 않습니다.
+- 클라우드에서는 `LOTTO_LOCAL_MODE`와 `LOTTO_DB_PATH`를 설정하지 마세요.
 
 ## 검증
 
