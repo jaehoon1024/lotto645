@@ -85,7 +85,7 @@ def main():
             st.caption("LOTTO LAB / 6·45")
             if not os.environ.get("LOTTO_DB_PATH") and os.environ.get("LOTTO_LOCAL_MODE") != "1":
                 st.caption("구매 이력은 이 브라우저에 자동 저장됩니다. 다른 기기에서는 JSON 백업을 가져오세요. 추천만 한 기록은 임시 보관됩니다.")
-            page = st.radio("메뉴", ["대시보드", "통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "데이터 관리"], label_visibility="collapsed", key="page")
+            page = st.radio("메뉴", ["대시보드", "통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "AJ 연구", "데이터 관리"], label_visibility="collapsed", key="page")
             st.divider()
             st.caption("데이터 반영 현황")
             st.write(f"**{latest.round}회까지 · {len(draws):,}개 회차**" if latest else "등록된 당첨 이력이 없습니다.")
@@ -337,6 +337,36 @@ def main():
                 chart(px.line(per_round, x="회차", y="일치", color="방식", labels={"일치": "회차별 평균 일치 개수"}, color_discrete_sequence=["#3c88bd", "#0f766e"]))
                 st.caption("그래프의 회차별 변동과 전체 평균을 함께 보세요. 1등의 희소성과 표본 변동 때문에 이 결과만으로 예측력을 입증할 수 없습니다. 이 화면은 신뢰구간이나 수익률을 추정하지 않습니다.")
                 st.download_button("상세 비교 CSV", csv_bytes(frame), "backtest.csv", "text/csv")
+
+        elif page == "AJ 연구":
+            st.title("AJ 연구 · 100회 구간 검증")
+            st.write("가설: 번호 쌍 관계의 변화가 단순 빈도보다 다음 회차에 관한 정보를 더 제공하는가?")
+            folder = ROOT / "research/results/AJ-R1"
+            if not (folder / "summary.json").exists():
+                st.info("첫 실험 결과를 준비하고 있습니다.")
+                return
+            summary = json.loads((folder / "summary.json").read_text(encoding="utf-8"))
+            manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
+            blocks = pd.read_csv(folder / "blocks_100.csv")
+            st.caption("공식 1~1248회 · 최초 200회 학습 · 201~1248회 평가 · 회차당 10게임 · 각 예측에는 직전 200회만 사용")
+            st.info("회고적 탐색 실험입니다. 이미 공개된 과거 자료이며 미래 예측력이 입증되었다는 의미는 아닙니다.")
+            a, b, c = st.columns(3)
+            a.metric("AJ-R1 평균 일치", f"{summary['means']['AJ-R1']:.4f}")
+            b.metric("빈도 기준 대비 차이", f"{summary['primary_delta']:+.4f}")
+            c.metric("공정 모의자료 대조 p값", f"{summary['one_sided_fair_null_p']:.3f}" if summary['one_sided_fair_null_p'] is not None else "미계산")
+            if summary["primary_delta"] > 0 and summary["one_sided_fair_null_p"] is not None and summary["one_sided_fair_null_p"] < 0.05:
+                st.write("이번 탐색에서 공정·독립 추첨 가정과의 차이를 관찰했습니다. 모형 변경 없이 미래 회차에서 별도 재현이 필요합니다.")
+            else:
+                st.write("AJ-R1이 빈도 기준보다 우수하다는 근거를 확인하지 못했습니다. 좋은 구간만 고르거나 이 결과를 보고 같은 모델의 설정을 바꾸지 않습니다.")
+            st.caption("주지표는 게임당 본번호 일치 개수의 회차별 평균입니다. 10게임을 독립 표본 10개로 취급하지 않습니다. p값은 예측 성공 확률이 아닙니다.")
+            blocks["구간"] = blocks.apply(lambda r:f"{int(r['구간 시작'])}~{int(r['구간끝'])}" + (" (48회)" if r["회차수"] < 100 else ""),axis=1)
+            chart(px.line(blocks,x="구간",y="평균일치",color="방식",markers=True,color_discrete_map={"무작위":"#788b96","빈도 기준":"#3c88bd","AJ-R1":"#0f766e"}))
+            st.dataframe(blocks,hide_index=True,width="stretch")
+            st.download_button("100회 구간 결과 CSV",(folder / "blocks_100.csv").read_bytes(),"AJ-R1_blocks_100.csv","text/csv")
+            st.download_button("회차별 상세 CSV",(folder / "per_round.csv").read_bytes(),"AJ-R1_per_round.csv","text/csv")
+            with st.expander("고정한 가설·계산식·실행 정보"):
+                st.markdown((ROOT / "research/AJ_R1_PROTOCOL.md").read_text(encoding="utf-8"))
+                st.json(manifest)
 
         elif page == "데이터 관리":
             st.title("당첨 데이터 관리")

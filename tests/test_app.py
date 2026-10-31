@@ -35,7 +35,7 @@ def test_empty_dashboard_and_generation_and_saving(tmp_path, monkeypatch):
 def test_all_pages_with_data(tmp_path, monkeypatch):
     app = setup_app(tmp_path, monkeypatch, with_data=True)
     assert not app.exception
-    for page in ["통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "데이터 관리"]:
+    for page in ["통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "AJ 연구", "데이터 관리"]:
         app.sidebar.radio[0].set_value(page).run()
         assert not app.exception, page
     app.sidebar.radio[0].set_value("과거 검증").run()

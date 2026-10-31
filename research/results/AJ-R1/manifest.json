@@ -1,0 +1,20 @@
+{
+  "model": "AJ-R1",
+  "kind": "retrospective_exploration",
+  "started_at": "2026-10-31T21:13:23.092614+00:00",
+  "config": {
+    "window": 100,
+    "block": 100,
+    "games": 10,
+    "candidates": 512,
+    "max_overlap": 3,
+    "prior": 20.0,
+    "relation_weight": 0.25,
+    "seed": 20261101,
+    "null_repeats": 199
+  },
+  "data_sha256": "cba84f7a5c98eb9f913a4b701710ca90c2f473ea5a919ee829aa890fa9e0ff31",
+  "protocol_sha256": "bb786d62eefe2f12a5b92086c5678ebbe84774a0d416c4079698852826f68f3f",
+  "code_sha256": "6ca4f4366ce04a3c0bda088220a4a46e650164cb3de237c0c26519d24940545b",
+  "data_source": "https://www.dhlottery.co.kr/lt645/result"
+}

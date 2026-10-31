@@ -1,0 +1,21 @@
+{
+  "means": {
+    "무작위": 0.7969465648854954,
+    "빈도 기준": 0.7943702290076324,
+    "AJ-R1": 0.7936068702290084
+  },
+  "primary_delta": -0.0007633587786239904,
+  "random_delta": -0.00333969465648698,
+  "tested_rounds": 1048,
+  "complete_blocks": 10,
+  "partial_block_rounds": 48,
+  "positive_blocks_vs_frequency": 6,
+  "total_blocks": 11,
+  "one_sided_fair_null_p": 0.545,
+  "null_repeats": 199,
+  "null_delta_2_5_97_5_percentiles": [
+    -0.01744751908397061,
+    0.0161211832061073
+  ],
+  "elapsed_seconds": 123.0
+}
