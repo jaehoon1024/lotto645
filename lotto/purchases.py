@@ -1,5 +1,6 @@
 """구매 사실은 사용자 입력으로 기록하며, 결과는 당첨 데이터로 매번 계산한다."""
 from datetime import datetime, timezone
+from contextlib import nullcontext
 import json
 from uuid import UUID, uuid4
 
@@ -44,7 +45,7 @@ def records(db):
     return [{**dict(row), "numbers": json.loads(row["numbers"])} for row in db.execute("SELECT * FROM purchases ORDER BY target_round DESC, created_at DESC, id")]
 
 
-def import_records(db, payload):
+def import_records(db, payload, *, commit=True):
     if not isinstance(payload, list) or len(payload) > 10_000:
         raise ValueError("구매 기록은 최대 10,000개까지 가져올 수 있습니다.")
     validated = [validate(r) for r in payload]
@@ -59,7 +60,7 @@ def import_records(db, payload):
         if old and datetime.fromisoformat(r["updated_at"]) <= datetime.fromisoformat(old["updated_at"]):
             continue
         pending.append(r)
-    with db:
+    with (db if commit else nullcontext()):
         for r in pending:
             db.execute("""INSERT INTO purchases VALUES (?,?,?,?,?,?,?) ON CONFLICT(id)
                 DO UPDATE SET status=excluded.status, updated_at=excluded.updated_at""",

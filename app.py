@@ -14,7 +14,8 @@ import plotly.express as px
 import streamlit as st
 
 from lotto.core import Draw, backtest, generate, match, parse_numbers, stats
-from lotto import purchases
+from lotto import purchases, workspace
+from lotto.dashboard import render as render_dashboard
 from lotto.browser_store import sync as sync_browser_purchases
 from lotto.refresh_ui import auto_results
 from lotto.storage import (CSV_FIELDS, connect, export_draws, load_draws, read_csv,
@@ -66,7 +67,7 @@ def database_path():
 def main():
     path = database_path()
     with closing(connect(path)) as db:
-        purchases.setup(db)
+        workspace.setup(db)
         snapshot = ROOT / "data/official_history.csv"
         if not os.environ.get("LOTTO_DB_PATH") and not load_draws(db) and snapshot.exists():
             try:
@@ -84,7 +85,7 @@ def main():
             st.title("🍀 로또 랩")
             st.caption("LOTTO LAB / 6·45")
             if not os.environ.get("LOTTO_DB_PATH") and os.environ.get("LOTTO_LOCAL_MODE") != "1":
-                st.caption("구매 이력은 이 브라우저에 자동 저장됩니다. 다른 기기에서는 JSON 백업을 가져오세요. 추천만 한 기록은 임시 보관됩니다.")
+                st.caption("구매·추천·메모는 이 브라우저에 저장됩니다. 다른 기기에서는 대시보드의 전체 JSON 백업을 가져오세요.")
             page = st.radio("메뉴", ["대시보드", "통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "AJ 연구", "데이터 관리"], label_visibility="collapsed", key="page")
             st.divider()
             st.caption("데이터 반영 현황")
@@ -95,27 +96,7 @@ def main():
             st.link_button("동행복권 공식 결과 ↗", "https://www.dhlottery.co.kr/lt645/result")
 
         if page == "대시보드":
-            st.markdown('<div class="hero"><div class="eyebrow">LOTTO LAB · PERSONAL ANALYTICS</div><h2>기록을 살펴보고, 나의 조합을 만드세요.</h2><p>당첨 이력 분석부터 번호 생성과 결과 확인까지.<br>추천에 적용한 기준을 직접 확인할 수 있습니다.</p></div>', unsafe_allow_html=True)
-            a, b, c = st.columns(3)
-            a.metric("등록된 당첨 이력", f"{len(draws):,}회")
-            b.metric("마지막 등록 회차", f"{latest.round}회" if latest else "—")
-            c.metric("저장한 추천 조합", f"{db.execute('SELECT count(*) FROM recommendations').fetchone()[0]:,}게임")
-            st.write("")
-            if latest:
-                st.subheader(f"마지막 등록 결과 · {latest.round}회")
-                st.caption(f"{latest.date} 추첨 · 출처: {latest.source} · 실시간 최신 여부는 데이터 관리에서 확인하세요.")
-                st.markdown(balls(latest.numbers) + '<span class="muted"> ＋ 보너스 </span>' + balls([latest.bonus]), unsafe_allow_html=True)
-                st.subheader("최근 10회 번호별 출현")
-                f = stats(draws[-10:])["frequency"]
-                chart(px.bar(x=list(f), y=list(f.values()), labels={"x": "번호", "y": "출현 횟수"}, color_discrete_sequence=["#0f766e"]))
-            else:
-                st.info("데이터 관리에서 공식 결과를 가져오거나 CSV를 등록하세요. 당첨 이력이 없어도 무작위·조건 지정 추천을 사용할 수 있습니다.")
-                st.subheader("사용 순서")
-                for col, title, body in zip(st.columns(3), ["01 · 데이터 준비", "02 · 나의 조합", "03 · 결과 확인"], ["회차별 결과를 가져와 통계를 확인합니다.", "조건을 정하고 추천 번호를 저장합니다.", "추첨 결과를 등록하면 자동으로 대조합니다."]):
-                    with col:
-                        with st.container(border=True):
-                            st.markdown(f"**{title}**")
-                            st.write(body)
+            render_dashboard(db,draws,ROOT,balls,chart)
 
         elif page == "통계 분석":
             st.title("통계 분석")

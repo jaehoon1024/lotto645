@@ -82,3 +82,17 @@ def test_manual_purchase_is_reflected_in_next_generation(tmp_path, monkeypatch):
     next(b for b in app.button if b.label == "번호 생성").click().run()
     assert not app.exception
     assert app.session_state["generated"]["settings"]["purchase_history_count"] == 1
+
+
+def test_dashboard_can_save_note_and_frozen_recommendations(tmp_path,monkeypatch):
+    app=setup_app(tmp_path,monkeypatch)
+    assert not app.exception
+    next(t for t in app.text_input if t.label=="메모 제목").set_value("AJ-R2 관찰")
+    app.text_area[0].set_value("관계가 유지되는 기간을 살펴봅니다.")
+    next(b for b in app.button if b.label=="연구 메모 저장").click().run()
+    assert not app.exception
+    next(b for b in app.button if b.label=="개인 추천 기록에 보관").click().run()
+    assert not app.exception
+    assert next(b for b in app.button if b.label=="개인 추천 기록에 보관").disabled
+    app.sidebar.radio[0].set_value("추천 기록 · 결과").run()
+    assert len(app.dataframe[0].value)==5

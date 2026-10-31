@@ -11,4 +11,5 @@ dist/
 artifacts/
 data/*purchase*.json
 data/personal/
+.codex-remote-attachments/
 
