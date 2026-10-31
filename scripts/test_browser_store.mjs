@@ -1,6 +1,6 @@
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
-const source=readFileSync('lotto/browser_store.py','utf8').match(/STORE_JS = """([\s\S]*?)"""/)[1];
+const source=readFileSync('lotto/workspace_browser_store.py','utf8').match(/STORE_JS = """([\s\S]*?)"""/)[1];
 const render=new Function(source.replace('export default function','return function'))();
 const memory=new Map();
 globalThis.document={createElement:()=>({style:{},textContent:''})};
