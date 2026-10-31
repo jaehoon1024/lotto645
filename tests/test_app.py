@@ -35,7 +35,7 @@ def test_empty_dashboard_and_generation_and_saving(tmp_path, monkeypatch):
 def test_all_pages_with_data(tmp_path, monkeypatch):
     app = setup_app(tmp_path, monkeypatch, with_data=True)
     assert not app.exception
-    for page in ["통계 분석", "번호 추천", "추천 기록 · 결과", "과거 검증", "데이터 관리"]:
+    for page in ["통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "데이터 관리"]:
         app.sidebar.radio[0].set_value(page).run()
         assert not app.exception, page
     app.sidebar.radio[0].set_value("과거 검증").run()
@@ -68,3 +68,17 @@ def test_public_sessions_keep_records_separate(monkeypatch):
     assert not second.exception
     assert len(second.dataframe) == 0
     assert first.session_state["workspace"].name != second.session_state["workspace"].name
+
+
+def test_manual_purchase_is_reflected_in_next_generation(tmp_path, monkeypatch):
+    app = setup_app(tmp_path, monkeypatch, with_data=True)
+    app.sidebar.radio[0].set_value("구매 이력").run()
+    app.text_input[0].set_value("3 5 8 10 25 27")
+    app.checkbox[0].check()
+    next(b for b in app.button if b.label == "구매 완료 기록").click().run()
+    assert not app.exception
+    assert len(app.dataframe[0].value) == 1
+    app.sidebar.radio[0].set_value("번호 추천").run()
+    next(b for b in app.button if b.label == "번호 생성").click().run()
+    assert not app.exception
+    assert app.session_state["generated"]["settings"]["purchase_history_count"] == 1

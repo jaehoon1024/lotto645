@@ -1,0 +1,26 @@
+// Browser storage protocol test without writing a user's browser data.
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const source = readFileSync('lotto/browser_store.py', 'utf8').match(/STORE_JS = """([\s\S]*?)"""/)[1];
+const render = new Function(source.replace('export default function', 'return function'))();
+const memory = new Map();
+globalThis.document = {createElement: () => ({style: {}, textContent: ''})};
+globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v)};
+const parent = {replaceChildren: () => {}};
+let restored;
+const setStateValue = (k, value) => {restored = value;};
+render({data:{ready:false,nonce:'session-1'},parentElement:parent,setStateValue});
+assert.deepEqual(restored.records, []);
+const record = {id:'example',updated_at:'2026-10-31T10:00:00+00:00',status:'purchased'};
+render({data:{ready:true,nonce:'session-1',records:[record]},parentElement:parent,setStateValue});
+assert.equal(JSON.parse(memory.get('lotto-lab-purchases-v1')).length, 1);
+render({data:{ready:false,nonce:'session-2'},parentElement:{replaceChildren:()=>{}},setStateValue});
+assert.equal(restored.records[0].id, 'example');
+const cancelled = {...record,updated_at:'2026-10-31T11:00:00+00:00',status:'void'};
+render({data:{ready:true,nonce:'session-2',records:[cancelled]},parentElement:parent,setStateValue});
+render({data:{ready:true,nonce:'session-1',records:[record]},parentElement:parent,setStateValue});
+assert.equal(JSON.parse(memory.get('lotto-lab-purchases-v1'))[0].status, 'void');
+globalThis.localStorage = {getItem: () => {throw Error('blocked');}};
+render({data:{ready:false,nonce:'blocked'},parentElement:{replaceChildren:()=>{}},setStateValue});
+assert.equal(restored.error, true);
+console.log('Browser storage protocol checks passed: restore, merge, cancellation, blocked storage');

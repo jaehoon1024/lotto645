@@ -59,7 +59,7 @@ def stats(draws: list[Draw]) -> dict:
 def generate(count: int = 5, *, mode: str = "random", include=(), exclude=(),
              odd_count: int | None = None, sum_min: int = 21, sum_max: int = 255,
              max_overlap: int = 6, draws: list[Draw] | None = None,
-             seed: int | None = None) -> list[tuple[int, ...]]:
+             seed: int | None = None, purchased=(), history_overlap: int = 5) -> list[tuple[int, ...]]:
     if mode not in {"random", "condition", "weighted"}:
         raise ValueError("지원하지 않는 추천 방식입니다.")
     if type(count) is not int or not 1 <= count <= 100:
@@ -89,10 +89,14 @@ def generate(count: int = 5, *, mode: str = "random", include=(), exclude=(),
         raise ValueError("통계 가중 추천은 당첨 이력을 먼저 가져와야 합니다.")
     rng = random.Random(seed)
     frequency = Counter(n for d in (draws or []) for n in d.numbers)
+    purchased = [set(t) for t in purchased]
+    if history_overlap not in range(7):
+        raise ValueError("구매 이력 중복 상한은 0~6입니다.")
 
     def accept(candidate):
         return (sum_min <= sum(candidate) <= sum_max
-                and (odd_count is None or sum(n % 2 for n in candidate) == odd_count))
+                and (odd_count is None or sum(n % 2 for n in candidate) == odd_count)
+                and all(len(set(candidate) & old) <= history_overlap for old in purchased))
 
     # 작은 후보 공간은 전수 확인하여 좁은 조건에서도 불필요한 재시도를 피한다.
     candidates = None

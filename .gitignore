@@ -9,4 +9,6 @@ data/*.sqlite3*
 .streamlit/secrets.toml
 dist/
 artifacts/
+data/*purchase*.json
+data/personal/
 

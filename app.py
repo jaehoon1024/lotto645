@@ -14,6 +14,9 @@ import plotly.express as px
 import streamlit as st
 
 from lotto.core import Draw, backtest, generate, match, parse_numbers, stats
+from lotto import purchases
+from lotto.browser_store import sync as sync_browser_purchases
+from lotto.refresh_ui import auto_results
 from lotto.storage import (CSV_FIELDS, connect, export_draws, load_draws, read_csv,
                            recommendation_rows, save_draws, save_recommendations)
 
@@ -61,7 +64,9 @@ def database_path():
 
 
 def main():
-    with closing(connect(database_path())) as db:
+    path = database_path()
+    with closing(connect(path)) as db:
+        purchases.setup(db)
         snapshot = ROOT / "data/official_history.csv"
         if not os.environ.get("LOTTO_DB_PATH") and not load_draws(db) and snapshot.exists():
             try:
@@ -70,14 +75,17 @@ def main():
                     db.execute("UPDATE draws SET source=?", ("공식 결과 수집 CSV · 동봉본",))
             except (ValueError, UnicodeError) as exc:
                 st.error(f"동봉 데이터를 읽지 못했습니다: {exc}")
+        if not os.environ.get("LOTTO_DB_PATH") and os.environ.get("LOTTO_LOCAL_MODE") != "1":
+            sync_browser_purchases(db, st.session_state.workspace.name)
+        auto_results(path)
         draws = load_draws(db)
         latest = draws[-1] if draws else None
         with st.sidebar:
             st.title("🍀 로또 랩")
             st.caption("LOTTO LAB / 6·45")
             if not os.environ.get("LOTTO_DB_PATH") and os.environ.get("LOTTO_LOCAL_MODE") != "1":
-                st.caption("웹 체험 · 기록은 현재 접속에만 보관됩니다. 새로고침·연결 종료 전 CSV로 저장하세요.")
-            page = st.radio("메뉴", ["대시보드", "통계 분석", "번호 추천", "추천 기록 · 결과", "과거 검증", "데이터 관리"], label_visibility="collapsed", key="page")
+                st.caption("구매 이력은 이 브라우저에 자동 저장됩니다. 다른 기기에서는 JSON 백업을 가져오세요. 추천만 한 기록은 임시 보관됩니다.")
+            page = st.radio("메뉴", ["대시보드", "통계 분석", "번호 추천", "구매 이력", "추천 기록 · 결과", "과거 검증", "데이터 관리"], label_visibility="collapsed", key="page")
             st.divider()
             st.caption("데이터 반영 현황")
             st.write(f"**{latest.round}회까지 · {len(draws):,}개 회차**" if latest else "등록된 당첨 이력이 없습니다.")
@@ -165,13 +173,17 @@ def main():
                 sums = b.slider("번호 합계 범위", 21, 255, (21, 255))
                 overlap = c.slider("게임 간 겹치는 번호 상한", 0, 6, 6)
                 window = st.selectbox("가중치 분석 구간", [10, 50, 100, 300], index=2)
+                apply_purchases = st.checkbox("구매 이력 반영 · 이미 구매한 조합 제외", value=True)
+                purchase_overlap = st.slider("이전 구매 조합과 겹치는 번호 상한", 0, 5, 5)
                 submitted = st.form_submit_button("번호 생성", type="primary", width="stretch")
             st.caption("기본 설정의 균등 무작위는 모든 조합을 같은 확률로 생성합니다. 조건을 추가하면 해당 조건 안에서 추출합니다. 통계 가중은 과거 출현 횟수 + 1을 이용한 실험입니다.")
             if submitted:
                 try:
                     history = [d for d in draws if d.round < target][-window:]
                     settings = {"include": parse_numbers(include_text), "exclude": parse_numbers(exclude_text), "odd_count": None if odd_label == "제한 없음" else int(odd_label), "sum_min": sums[0], "sum_max": sums[1], "max_overlap": overlap}
-                    tickets = generate(count, mode=modes[label], draws=history, **settings)
+                    purchased = purchases.history_for_generation(db, target) if apply_purchases else []
+                    tickets = generate(count, mode=modes[label], draws=history, purchased=purchased, history_overlap=purchase_overlap, **settings)
+                    settings.update({"purchase_history_applied": apply_purchases, "purchase_history_count": len(purchased), "purchase_history_overlap": purchase_overlap})
                     settings.update({"window": window, "history_start": history[0].round if history else None, "history_end": history[-1].round if history else None, "data_latest_round": latest.round if latest else 0})
                     st.session_state.generated = {"tickets": tickets, "target": target, "mode": label, "settings": settings, "saved": False}
                 except ValueError as exc:
@@ -199,6 +211,71 @@ def main():
                 b.download_button("추천 번호 CSV", csv_bytes(pd.DataFrame([{"대상 회차": generated["target"], **{f"n{i}": n for i, n in enumerate(t, 1)}} for t in generated["tickets"]])), "recommendations.csv", "text/csv")
                 if generated["saved"]:
                     st.success("추천 기록에 저장했습니다.")
+                with st.expander("실제로 구매한 게임 기록하기"):
+                    chosen = st.multiselect("구매 완료한 게임 선택", list(range(1, len(generated["tickets"]) + 1)), key="purchased_game_selection")
+                    bought = st.checkbox("위 게임을 실제로 구매했습니다", key="purchase_confirmed")
+                    if st.button("구매 이력에 등록", disabled=not bought or not chosen):
+                        from uuid import uuid4
+                        generated.setdefault("purchase_ids", {})
+                        for i in chosen:
+                            purchase_id = generated["purchase_ids"].setdefault(str(i), str(uuid4()))
+                            purchases.add(db, generated["target"], generated["tickets"][i - 1], purchase_id=purchase_id)
+                        st.session_state.purchase_notice = "구매 이력에 등록했습니다."
+                        st.rerun()
+                st.caption("구매 이력 반영은 중복 조절 기능이며, 과거 구매나 당첨이 다음 회차 확률을 바꾸지는 않습니다.")
+
+        elif page == "구매 이력":
+            st.title("구매 이력과 추첨 결과")
+            st.caption("본인이 구매한 게임을 기록합니다. 실제 복권 구매나 구매 취소를 실행하지 않습니다.")
+            if st.session_state.get("purchase_notice"):
+                st.success(st.session_state.pop("purchase_notice"))
+            rows = purchases.report(db)
+            active = [r for r in rows if r["상태"] == "구매 완료"]
+            a, b, c = st.columns(3)
+            a.metric("구매 게임 수", sum(r["수량"] for r in active))
+            b.metric("기록한 구매 금액", f"{sum(r['구매액'] for r in active):,}원")
+            c.metric("결과 미등록", sum(r["수량"] for r in active if r["일치"] is None))
+            if rows:
+                frame = pd.DataFrame(rows)
+                st.dataframe(frame.drop(columns=["ID"]), hide_index=True, width="stretch")
+                st.download_button("구매·결과 CSV", csv_bytes(frame), "purchases_results.csv", "text/csv")
+                with st.expander("잘못 등록한 구매 기록 정정"):
+                    choices = {r["ID"]: f"{r['회차']}회 · {r['번호']} · {r['수량']}게임" for r in active}
+                    if choices:
+                        selected = st.selectbox("정정할 기록", list(choices), format_func=choices.get)
+                        if st.button("잘못된 구매 등록 취소"):
+                            purchases.void(db, selected)
+                            st.rerun()
+            else:
+                st.info("등록된 구매 이력이 없습니다. 번호 추천 화면에서 게임을 선택하거나 아래에서 직접 등록하세요.")
+            with st.form("purchase_manual"):
+                st.subheader("구매 번호 직접 등록")
+                a, b = st.columns(2)
+                target_round = a.number_input("구매 대상 회차", min_value=1, value=latest.round + 1 if latest else 1)
+                copies = b.number_input("동일 조합 구매 수량", 1, 100, 1)
+                text = st.text_input("구매한 번호 6개", placeholder="예: 3, 5, 8, 10, 25, 27")
+                confirmed = st.checkbox("위 번호를 실제로 구매했습니다")
+                submit = st.form_submit_button("구매 완료 기록")
+            if submit:
+                try:
+                    if not confirmed:
+                        raise ValueError("실제 구매 여부를 확인해 주세요.")
+                    purchases.add(db, target_round, parse_numbers(text), copies)
+                    st.session_state.purchase_notice = "구매 완료 기록을 저장했습니다."
+                    st.rerun()
+                except ValueError as exc:
+                    st.error(str(exc))
+            with st.expander("구매 이력 백업 · 다른 기기로 이동", expanded=True):
+                st.download_button("구매 이력 JSON 백업", purchases.backup(db), "lotto_purchase_backup.json", "application/json")
+                uploaded = st.file_uploader("구매 이력 JSON 복원", type=["json"], key="purchase_backup")
+                if uploaded and st.button("구매 이력 가져오기"):
+                    try:
+                        count = purchases.restore(db, uploaded.getvalue())
+                        st.session_state.purchase_notice = f"{count}개 구매 기록을 가져왔습니다. 동일 ID는 중복 등록하지 않습니다."
+                        st.rerun()
+                    except ValueError as exc:
+                        st.error(str(exc))
+            st.caption("웹 기록은 브라우저 데이터 삭제·시크릿 모드 종료 시 사라질 수 있습니다. 정기적으로 JSON 백업을 보관하세요. 등수는 현재 등록된 추첨 결과로 재계산하며 당첨금·수익률은 추정하지 않습니다.")
 
         elif page == "추천 기록 · 결과":
             st.title("추천 기록과 결과")
