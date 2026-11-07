@@ -19,6 +19,7 @@ def test_1249_result_dashboard_uses_full_research_comparison(tmp_path, monkeypat
     purchases.add(db, 1249, (9,15,21,27,38,42))
     db.close()
     app = AppTest.from_file(APP, default_timeout=30).run()
+    app.selectbox(key="result_round").set_value(1249).run()
     assert not app.exception
     results = next(f.value for f in app.dataframe if "본번호 일치" in f.value.columns)
     assert len(results) == 5 and results["본번호 일치"].sum() == 0
