@@ -8,6 +8,26 @@ from test_core import history
 APP = str(Path(__file__).resolve().parents[1] / "app.py")
 
 
+def test_1249_result_dashboard_uses_full_research_comparison(tmp_path, monkeypatch):
+    from lotto.core import Draw
+    from lotto import purchases
+    path = tmp_path / "results.sqlite3"
+    monkeypatch.setenv("LOTTO_DB_PATH", str(path))
+    db = connect(path)
+    purchases.setup(db)
+    save_draws(db, [Draw(1249, "2026-11-07", (2,11,16,25,34,35), 14)])
+    purchases.add(db, 1249, (9,15,21,27,38,42))
+    db.close()
+    app = AppTest.from_file(APP, default_timeout=30).run()
+    assert not app.exception
+    results = next(f.value for f in app.dataframe if "본번호 일치" in f.value.columns)
+    assert len(results) == 5 and results["본번호 일치"].sum() == 0
+    comparison = next(f.value for f in app.dataframe if "게임당 평균 일치" in f.value.columns and "게임 수" in f.value.columns)
+    assert comparison["게임 수"].tolist() == [10,10,10]
+    assert comparison["게임당 평균 일치"].tolist() == [1.1,0.2,0.3]
+    assert any("구매액 1,000원" in s.value for s in app.success)
+
+
 def setup_app(tmp_path, monkeypatch, with_data=False):
     path = tmp_path / "ui.sqlite3"
     monkeypatch.setenv("LOTTO_DB_PATH", str(path))

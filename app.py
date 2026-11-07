@@ -16,7 +16,7 @@ import streamlit as st
 from lotto.core import Draw, backtest, generate, match, parse_numbers, stats
 from lotto import purchases
 from lotto import workspace_v2 as workspace
-from lotto.research_dashboard import render as render_dashboard
+from lotto.research_dashboard_v3 import render as render_dashboard
 from lotto.workspace_browser_store import sync as sync_browser_purchases
 from lotto.refresh_ui import auto_results
 from lotto.storage import (CSV_FIELDS, connect, export_draws, load_draws, read_csv,
@@ -70,11 +70,9 @@ def main():
     with closing(connect(path)) as db:
         workspace.setup(db)
         snapshot = ROOT / "data/official_history.csv"
-        if not os.environ.get("LOTTO_DB_PATH") and not load_draws(db) and snapshot.exists():
+        if not os.environ.get("LOTTO_DB_PATH") and snapshot.exists():
             try:
                 save_draws(db, read_csv(snapshot.read_bytes()))
-                with db:
-                    db.execute("UPDATE draws SET source=?", ("공식 결과 수집 CSV · 동봉본",))
             except (ValueError, UnicodeError) as exc:
                 st.error(f"동봉 데이터를 읽지 못했습니다: {exc}")
         if not os.environ.get("LOTTO_DB_PATH") and os.environ.get("LOTTO_LOCAL_MODE") != "1":
