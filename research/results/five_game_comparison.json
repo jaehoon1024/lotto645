@@ -1,0 +1,271 @@
+{
+  "first_round": 201,
+  "last_round": 1250,
+  "round_count": 1050,
+  "data_sha256": "016545bb8cfd0cca697f7f44498081fd22067fc30ae744511ad73d5715d9be8f",
+  "overall": {
+    "무작위": {
+      "winning_rounds": 147,
+      "winning_rate": 0.14,
+      "mean_hits": 0.811047619047619
+    },
+    "AJ-R1": {
+      "winning_rounds": 112,
+      "winning_rate": 0.10666666666666667,
+      "mean_hits": 0.8007619047619048
+    },
+    "AJ-D1": {
+      "winning_rounds": 120,
+      "winning_rate": 0.11428571428571428,
+      "mean_hits": 0.7845714285714286
+    }
+  },
+  "fair_draw_reference": {
+    "무작위": 0.11362357327424644,
+    "AJ-D1": 0.11867929763562209
+  },
+  "blocks": [
+    {
+      "first": 201,
+      "last": 300,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 13,
+          "winning_rate": 0.13,
+          "mean_hits": 0.756
+        },
+        "AJ-R1": {
+          "winning_rounds": 6,
+          "winning_rate": 0.06,
+          "mean_hits": 0.76
+        },
+        "AJ-D1": {
+          "winning_rounds": 13,
+          "winning_rate": 0.13,
+          "mean_hits": 0.766
+        }
+      }
+    },
+    {
+      "first": 301,
+      "last": 400,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 15,
+          "winning_rate": 0.15,
+          "mean_hits": 0.812
+        },
+        "AJ-R1": {
+          "winning_rounds": 8,
+          "winning_rate": 0.08,
+          "mean_hits": 0.808
+        },
+        "AJ-D1": {
+          "winning_rounds": 16,
+          "winning_rate": 0.16,
+          "mean_hits": 0.804
+        }
+      }
+    },
+    {
+      "first": 401,
+      "last": 500,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 12,
+          "winning_rate": 0.12,
+          "mean_hits": 0.796
+        },
+        "AJ-R1": {
+          "winning_rounds": 12,
+          "winning_rate": 0.12,
+          "mean_hits": 0.83
+        },
+        "AJ-D1": {
+          "winning_rounds": 7,
+          "winning_rate": 0.07,
+          "mean_hits": 0.788
+        }
+      }
+    },
+    {
+      "first": 501,
+      "last": 600,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 17,
+          "winning_rate": 0.17,
+          "mean_hits": 0.864
+        },
+        "AJ-R1": {
+          "winning_rounds": 14,
+          "winning_rate": 0.14,
+          "mean_hits": 0.85
+        },
+        "AJ-D1": {
+          "winning_rounds": 16,
+          "winning_rate": 0.16,
+          "mean_hits": 0.784
+        }
+      }
+    },
+    {
+      "first": 601,
+      "last": 700,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 11,
+          "winning_rate": 0.11,
+          "mean_hits": 0.802
+        },
+        "AJ-R1": {
+          "winning_rounds": 7,
+          "winning_rate": 0.07,
+          "mean_hits": 0.714
+        },
+        "AJ-D1": {
+          "winning_rounds": 13,
+          "winning_rate": 0.13,
+          "mean_hits": 0.79
+        }
+      }
+    },
+    {
+      "first": 701,
+      "last": 800,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 20,
+          "winning_rate": 0.2,
+          "mean_hits": 0.882
+        },
+        "AJ-R1": {
+          "winning_rounds": 12,
+          "winning_rate": 0.12,
+          "mean_hits": 0.848
+        },
+        "AJ-D1": {
+          "winning_rounds": 9,
+          "winning_rate": 0.09,
+          "mean_hits": 0.764
+        }
+      }
+    },
+    {
+      "first": 801,
+      "last": 900,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 14,
+          "winning_rate": 0.14,
+          "mean_hits": 0.824
+        },
+        "AJ-R1": {
+          "winning_rounds": 18,
+          "winning_rate": 0.18,
+          "mean_hits": 0.832
+        },
+        "AJ-D1": {
+          "winning_rounds": 8,
+          "winning_rate": 0.08,
+          "mean_hits": 0.824
+        }
+      }
+    },
+    {
+      "first": 901,
+      "last": 1000,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 5,
+          "winning_rate": 0.05,
+          "mean_hits": 0.8
+        },
+        "AJ-R1": {
+          "winning_rounds": 8,
+          "winning_rate": 0.08,
+          "mean_hits": 0.734
+        },
+        "AJ-D1": {
+          "winning_rounds": 11,
+          "winning_rate": 0.11,
+          "mean_hits": 0.78
+        }
+      }
+    },
+    {
+      "first": 1001,
+      "last": 1100,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 13,
+          "winning_rate": 0.13,
+          "mean_hits": 0.796
+        },
+        "AJ-R1": {
+          "winning_rounds": 10,
+          "winning_rate": 0.1,
+          "mean_hits": 0.788
+        },
+        "AJ-D1": {
+          "winning_rounds": 8,
+          "winning_rate": 0.08,
+          "mean_hits": 0.79
+        }
+      }
+    },
+    {
+      "first": 1101,
+      "last": 1200,
+      "count": 100,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 15,
+          "winning_rate": 0.15,
+          "mean_hits": 0.764
+        },
+        "AJ-R1": {
+          "winning_rounds": 12,
+          "winning_rate": 0.12,
+          "mean_hits": 0.846
+        },
+        "AJ-D1": {
+          "winning_rounds": 16,
+          "winning_rate": 0.16,
+          "mean_hits": 0.784
+        }
+      }
+    },
+    {
+      "first": 1201,
+      "last": 1250,
+      "count": 50,
+      "methods": {
+        "무작위": {
+          "winning_rounds": 12,
+          "winning_rate": 0.24,
+          "mean_hits": 0.84
+        },
+        "AJ-R1": {
+          "winning_rounds": 5,
+          "winning_rate": 0.1,
+          "mean_hits": 0.796
+        },
+        "AJ-D1": {
+          "winning_rounds": 3,
+          "winning_rate": 0.06,
+          "mean_hits": 0.728
+        }
+      }
+    }
+  ]
+}
