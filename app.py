@@ -16,7 +16,7 @@ import streamlit as st
 from lotto.core import Draw, backtest, generate, match, parse_numbers, stats
 from lotto import purchases
 from lotto import workspace_v2 as workspace
-from lotto.research_dashboard_v5 import render as render_dashboard
+from lotto.research_dashboard_v6 import render as render_dashboard
 from lotto.workspace_browser_store import sync as sync_browser_purchases
 from lotto.refresh_ui import auto_results
 from lotto.storage import (CSV_FIELDS, connect, export_draws, load_draws, read_csv,
